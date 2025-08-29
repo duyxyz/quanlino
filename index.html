@@ -5,40 +5,80 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Sổ Ghi Nợ</title>
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#00bfff">
+  <meta name="theme-color" content="#000000">
   <style>
-    * { user-select: none; }
+    * { user-select: none; margin:0; padding:0; box-sizing:border-box; }
     body {
       font-family: "Segoe UI", sans-serif;
-      margin: 0; padding: 20px;
       background: #000; color: #fff;
+      padding: 20px;
     }
-    h1 { font-size: 24px; text-align: center; margin-bottom: 20px; color: #00bfff; }
-    #toggleFormBtn {
-      background: #00bfff; color: #000; font-weight: bold;
-      font-size: 18px; border: none; border-radius: 10px;
-      padding: 12px; width: 100%; margin-bottom: 15px; cursor: pointer;
+    h1 {
+      font-size: 24px; text-align: center;
+      margin-bottom: 20px; color: #fff;
+      letter-spacing: 1px;
     }
-    #toggleFormBtn:hover { background: #00a6e0; transform: scale(1.03); }
-    .input-box { display: none; flex-direction: column; gap: 8px; margin-bottom: 15px; opacity: 0; transition: opacity 0.4s ease; }
+
+    /* --- Nút chính --- */
+    .top-buttons {
+      display: flex; gap: 10px; margin-bottom: 15px;
+    }
+    .top-buttons button {
+      flex: 1;
+      background: #222; color: #fff;
+      font-weight: bold; font-size: 16px;
+      border: 1px solid #333; border-radius: 10px;
+      padding: 12px; cursor: pointer; transition: 0.2s;
+    }
+    .top-buttons button:hover {
+      background: #444;
+    }
+
+    /* --- Form nhập --- */
+    .input-box { 
+      display: none; flex-direction: column; gap: 8px;
+      margin-bottom: 15px; opacity: 0; transition: opacity 0.4s ease;
+    }
     input, .input-box button {
-      padding: 12px; font-size: 16px; border: 1px solid #333;
-      border-radius: 8px; background: #111; color: #fff;
+      padding: 12px; font-size: 16px;
+      border: 1px solid #333; border-radius: 8px;
+      background: #111; color: #fff;
     }
-    input:focus { outline: none; border-color: #00bfff; box-shadow: 0 0 8px #00bfff66; }
-    .input-box button { background: #00bfff; color: #000; font-weight: bold; border: none; cursor: pointer; }
-    .input-box button:hover { background: #00a6e0; transform: scale(1.02); }
-    table { width: 100%; border-collapse: collapse; background: #111; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.6); }
-    th, td { padding: 12px; font-size: 16px; text-align: left; border-bottom: 1px solid #222; }
-    th { background: #111; color: #00bfff; }
+    input:focus {
+      outline: none; border-color: #666; box-shadow: 0 0 6px #555;
+    }
+    .input-box button {
+      background: #222; font-weight: bold; cursor: pointer;
+    }
+    .input-box button:hover { background: #444; }
+
+    /* --- Bảng --- */
+    table {
+      width: 100%; border-collapse: collapse;
+      background: #000; border-radius: 10px; overflow: hidden;
+      border: 1px solid #222;
+    }
+    th, td {
+      padding: 12px; font-size: 16px; text-align: left;
+      border-bottom: 1px solid #222;
+    }
+    th { background: #111; color: #ddd; }
     tr:nth-child(even) { background: #0a0a0a; }
-    tr:hover td { background: #1a1a1a; transition: background 0.3s; }
-    .options { cursor: pointer; font-weight: bold; font-size: 20px; text-align: right; color: #aaa; }
+    tr:hover td { background: #1a1a1a; }
+
+    .options { cursor: pointer; font-weight: bold; font-size: 20px; text-align: right; color: #777; }
     .options:hover { color: #fff; }
-    .total { margin-top: 15px; font-size: 18px; font-weight: bold; text-align: right; color: #00bfff; }
+
+    /* --- Tổng --- */
+    .total {
+      margin-top: 15px; font-size: 18px; font-weight: bold;
+      text-align: right; color: #fff;
+    }
+
+    /* --- Menu chuột phải --- */
     .context-menu {
       position: absolute; background: #111; border: 1px solid #333;
-      border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.8);
+      border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.6);
       display: none; flex-direction: column; z-index: 1000;
       overflow: hidden; min-width: 140px;
     }
@@ -47,29 +87,59 @@
       background: #111; font-size: 15px; text-align: left;
       cursor: pointer; color: #fff;
     }
-    .context-menu button:hover { background: #222; color: #00bfff; }
+    .context-menu button:hover { background: #222; }
     .context-menu button:last-child { border-bottom: none; }
+
+    /* --- Menu sao lưu --- */
+    .backup-menu {
+      position: absolute; background: #111; border: 1px solid #333;
+      border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+      display: none; flex-direction: column; z-index: 1000;
+      overflow: hidden; min-width: 160px;
+    }
+    .backup-menu button {
+      padding: 12px; border: none; border-bottom: 1px solid #222;
+      background: #111; font-size: 15px; text-align: left;
+      cursor: pointer; color: #fff;
+    }
+    .backup-menu button:hover { background: #222; }
+    .backup-menu button:last-child { border-bottom: none; }
   </style>
 </head>
 <body>
   <h1>SỔ GHI NỢ</h1>
-  <button id="toggleFormBtn">Thêm</button>
 
+  <!-- Hàng nút chính -->
+  <div class="top-buttons">
+    <button id="backupBtn">Sao lưu</button>
+    <button id="toggleFormBtn">Thêm</button>
+  </div>
+
+  <!-- Form nhập -->
   <div class="input-box" id="inputBox">
     <input type="text" id="name" placeholder="Tên người nợ">
     <input type="number" id="amount" placeholder="Số tiền">
     <button onclick="addDebt()">Xác nhận</button>
   </div>
 
+  <!-- Bảng dữ liệu -->
   <table id="debtTable">
     <tr><th>Tên</th><th>Số tiền</th><th></th></tr>
   </table>
 
   <div class="total" id="totalDebt">Tổng: 0 ₫</div>
 
+  <!-- Context menu -->
   <div class="context-menu" id="contextMenu">
     <button id="editBtn">✏️ Chỉnh sửa</button>
     <button id="deleteBtn">❌ Xóa</button>
+  </div>
+
+  <!-- Menu sao lưu -->
+  <div class="backup-menu" id="backupMenu">
+    <button onclick="exportData()">📤 Xuất dữ liệu</button>
+    <input type="file" id="importFile" accept="application/json" style="display:none;" onchange="importData(event)">
+    <button onclick="document.getElementById('importFile').click()">📥 Nhập dữ liệu</button>
   </div>
 
   <script>
@@ -78,6 +148,7 @@
     const inputAmount = document.getElementById("amount");
     const totalDebt = document.getElementById("totalDebt");
     const contextMenu = document.getElementById("contextMenu");
+    const backupMenu = document.getElementById("backupMenu");
     let currentRow = null;
 
     window.onload = () => {
@@ -129,14 +200,14 @@
       totalDebt.textContent = "Tổng: " + total.toLocaleString("vi-VN") + " ₫";
     }
 
+    /* Context menu */
     function showContextMenu(target) {
       const rect = target.getBoundingClientRect();
       contextMenu.style.display = "flex";
       contextMenu.style.left = rect.right - contextMenu.offsetWidth + "px";
       contextMenu.style.top = rect.bottom + "px";
     }
-    function hideContextMenu() { contextMenu.style.display = "none"; }
-    contextMenu.addEventListener("click", (e) => e.stopPropagation());
+    function hideContextMenu() { contextMenu.style.display = "none"; backupMenu.style.display="none"; }
     document.addEventListener("click", () => hideContextMenu());
 
     document.getElementById("editBtn").onclick = () => {
@@ -151,12 +222,12 @@
       }
       hideContextMenu();
     };
-
     document.getElementById("deleteBtn").onclick = () => {
       if (currentRow) { currentRow.remove(); saveDebts(); updateTotal(); }
       hideContextMenu();
     };
 
+    /* Toggle form */
     const toggleFormBtn = document.getElementById("toggleFormBtn");
     toggleFormBtn.onclick = () => {
       const form = document.getElementById("inputBox");
@@ -170,7 +241,51 @@
       form.style.opacity = "0"; setTimeout(() => form.style.display = "none", 400);
     }
 
-    // Đăng ký Service Worker cho PWA
+    /* Sao lưu menu */
+    const backupBtn = document.getElementById("backupBtn");
+    backupBtn.onclick = (e) => {
+      e.stopPropagation();
+      const rect = backupBtn.getBoundingClientRect();
+      backupMenu.style.display = "flex";
+      backupMenu.style.left = rect.left + "px";
+      backupMenu.style.top = rect.bottom + "px";
+    };
+
+    /* Xuất / Nhập JSON */
+    function exportData() {
+      const debts = JSON.parse(localStorage.getItem("debts")) || [];
+      const blob = new Blob([JSON.stringify(debts, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = "so-ghi-no.json";
+      a.click(); URL.revokeObjectURL(url);
+      hideContextMenu();
+    }
+
+    function importData(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (Array.isArray(imported)) {
+            localStorage.setItem("debts", JSON.stringify(imported));
+            reloadTable(imported); updateTotal();
+            alert("✅ Nhập dữ liệu thành công!");
+          } else { alert("❌ File không hợp lệ!"); }
+        } catch { alert("❌ Lỗi khi đọc file!"); }
+      };
+      reader.readAsText(file);
+      hideContextMenu();
+    }
+
+    function reloadTable(data) {
+      while (table.rows.length > 1) table.deleteRow(1);
+      data.forEach(d => addDebtToTable(d.name, d.amount));
+    }
+
+    /* Service Worker */
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
         navigator.serviceWorker.register("service-worker.js")
