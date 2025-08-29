@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Sổ Ghi Nợ</title>
+  <style>
+    * {
+      user-select: none;
+    }
+
+    body {
+      font-family: "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #000;
+      color: #fff;
+    }
+
+    h1 {
+      font-size: 24px;
+      text-align: center;
+      margin-bottom: 20px;
+      color: #00bfff;
+      letter-spacing: 1px;
+    }
+
+    #toggleFormBtn {
+      background: #00bfff;
+      color: #000;
+      font-weight: bold;
+      font-size: 18px;
+      border: none;
+      border-radius: 10px;
+      padding: 12px;
+      width: 100%;
+      margin-bottom: 15px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    #toggleFormBtn:hover {
+      background: #00a6e0;
+      transform: scale(1.03);
+    }
+
+    .input-box {
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 15px;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    input, .input-box button {
+      padding: 12px;
+      font-size: 16px;
+      border: 1px solid #333;
+      border-radius: 8px;
+      background: #111;
+      color: #fff;
+      transition: 0.3s;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #00bfff;
+      box-shadow: 0 0 8px #00bfff66;
+    }
+
+    .input-box button {
+      background: #00bfff;
+      color: #000;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+    }
+
+    .input-box button:hover {
+      background: #00a6e0;
+      transform: scale(1.02);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #111;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.6);
+    }
+
+    th, td {
+      padding: 12px;
+      font-size: 16px;
+      text-align: left;
+      border-bottom: 1px solid #222;
+    }
+
+    th {
+      background: #111;
+      color: #00bfff;
+    }
+
+    tr:nth-child(even) {
+      background: #0a0a0a;
+    }
+
+    tr:hover td {
+      background: #1a1a1a;
+      transition: background 0.3s;
+    }
+
+    .options {
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 20px;
+      text-align: right;
+      color: #aaa;
+    }
+
+    .options:hover {
+      color: #fff;
+    }
+
+    .total {
+      margin-top: 15px;
+      font-size: 18px;
+      font-weight: bold;
+      text-align: right;
+      color: #00bfff;
+    }
+
+    .context-menu {
+      position: absolute;
+      background: #111;
+      border: 1px solid #333;
+      border-radius: 8px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.8);
+      display: none;
+      flex-direction: column;
+      z-index: 1000;
+      overflow: hidden;
+      min-width: 140px;
+      animation: popup 0.2s ease;
+    }
+
+    .context-menu button {
+      padding: 12px;
+      border: none;
+      border-bottom: 1px solid #222;
+      background: #111;
+      font-size: 15px;
+      text-align: left;
+      cursor: pointer;
+      color: #fff;
+      transition: 0.2s;
+    }
+
+    .context-menu button:hover {
+      background: #222;
+      color: #00bfff;
+    }
+
+    .context-menu button:last-child {
+      border-bottom: none;
+    }
+
+    @keyframes popup {
+      from { opacity: 0; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+  <h1>SỔ GHI NỢ</h1>
+
+  <button id="toggleFormBtn">Thêm</button>
+
+  <div class="input-box" id="inputBox">
+    <input type="text" id="name" placeholder="Tên người nợ">
+    <input type="number" id="amount" placeholder="Số tiền">
+    <button onclick="addDebt()">Xác nhận</button>
+  </div>
+
+  <table id="debtTable">
+    <tr><th>Tên</th><th>Số tiền</th><th></th></tr>
+  </table>
+
+  <div class="total" id="totalDebt">Tổng: 0 ₫</div>
+
+  <div class="context-menu" id="contextMenu">
+    <button id="editBtn">✏️ Chỉnh sửa</button>
+    <button id="deleteBtn">❌ Xóa</button>
+  </div>
+
+  <script>
+    const table = document.getElementById("debtTable");
+    const inputName = document.getElementById("name");
+    const inputAmount = document.getElementById("amount");
+    const totalDebt = document.getElementById("totalDebt");
+    const contextMenu = document.getElementById("contextMenu");
+    let currentRow = null;
+
+    window.onload = () => {
+      const saved = JSON.parse(localStorage.getItem("debts")) || [];
+      saved.forEach(d => addDebtToTable(d.name, d.amount));
+      updateTotal();
+    };
+
+    function formatMoney(amount) {
+      return parseInt(amount).toLocaleString("vi-VN") + " ₫";
+    }
+
+    function addDebt() {
+      const name = inputName.value.trim();
+      const amount = inputAmount.value.trim();
+      if (!name || !amount) return;
+
+      addDebtToTable(name, amount);
+      saveDebts();
+      updateTotal();
+
+      inputName.value = "";
+      inputAmount.value = "";
+      hideForm();
+    }
+
+    function addDebtToTable(name, amount) {
+      const row = table.insertRow();
+      const cellName = row.insertCell(0);
+      const cellAmount = row.insertCell(1);
+      const cellOptions = row.insertCell(2);
+
+      cellName.textContent = name;
+      cellAmount.textContent = formatMoney(amount);
+      cellOptions.innerHTML = `<span class="options">⋮</span>`;
+
+      const optionsBtn = cellOptions.querySelector(".options");
+      optionsBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        currentRow = row;
+        showContextMenu(optionsBtn);
+      });
+    }
+
+    function saveDebts() {
+      const debts = [];
+      for (let i = 1; i < table.rows.length; i++) {
+        const name = table.rows[i].cells[0].textContent;
+        const amount = table.rows[i].cells[1].textContent.replace(" ₫", "").replace(/\./g, "");
+        debts.push({ name, amount });
+      }
+      localStorage.setItem("debts", JSON.stringify(debts));
+    }
+
+    function updateTotal() {
+      let total = 0;
+      for (let i = 1; i < table.rows.length; i++) {
+        const amount = table.rows[i].cells[1].textContent.replace(" ₫", "").replace(/\./g, "");
+        total += parseInt(amount) || 0;
+      }
+      totalDebt.textContent = "Tổng: " + total.toLocaleString("vi-VN") + " ₫";
+    }
+
+    function showContextMenu(target) {
+      const rect = target.getBoundingClientRect();
+      contextMenu.style.display = "flex";
+      contextMenu.style.left = rect.right - contextMenu.offsetWidth + "px";
+      contextMenu.style.top = rect.bottom + "px";
+    }
+
+    function hideContextMenu() {
+      contextMenu.style.display = "none";
+    }
+
+    contextMenu.addEventListener("click", (e) => {
+      e.stopPropagation();
+    });
+
+    document.addEventListener("click", () => {
+      hideContextMenu();
+    });
+
+    document.getElementById("editBtn").onclick = () => {
+      if (currentRow) {
+        const name = currentRow.cells[0].textContent;
+        const amountText = currentRow.cells[1].textContent.replace(" ₫", "").replace(/\./g, "");
+        const newName = prompt("Tên mới:", name) || name;
+        const newAmount = prompt("Số tiền mới:", amountText) || amountText;
+        currentRow.cells[0].textContent = newName;
+        currentRow.cells[1].textContent = formatMoney(newAmount);
+        saveDebts();
+        updateTotal();
+      }
+      hideContextMenu();
+    };
+
+    document.getElementById("deleteBtn").onclick = () => {
+      if (currentRow) {
+        currentRow.remove();
+        saveDebts();
+        updateTotal();
+      }
+      hideContextMenu();
+    };
+
+    const toggleFormBtn = document.getElementById("toggleFormBtn");
+    toggleFormBtn.onclick = () => {
+      const form = document.getElementById("inputBox");
+      if (form.style.display === "none" || form.style.display === "") {
+        form.style.display = "flex";
+        setTimeout(() => { form.style.opacity = "1"; }, 10);
+        inputName.focus();
+      } else {
+        hideForm();
+      }
+    };
+
+    function hideForm() {
+      const form = document.getElementById("inputBox");
+      form.style.opacity = "0";
+      setTimeout(() => { form.style.display = "none"; }, 400);
+    }
+  </script>
+</body>
+</html>
