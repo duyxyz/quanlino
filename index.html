@@ -8,15 +8,25 @@
   <meta name="theme-color" content="#000000">
   <style>
     * { user-select: none; margin:0; padding:0; box-sizing:border-box; }
+
     body {
       font-family: "Segoe UI", sans-serif;
       background: #000; color: #fff;
       padding: 20px;
     }
+
     h1 {
-      font-size: 24px; text-align: center;
+      font-size: 28px; text-align: center;
       margin-bottom: 20px; color: #fff;
       letter-spacing: 1px;
+    }
+
+    /* Glass đen */
+    .glass {
+      background: rgba(0, 0, 0, 0.6);   /* đen trong suốt */
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
     }
 
     /* --- Nút chính --- */
@@ -25,130 +35,168 @@
     }
     .top-buttons button {
       flex: 1;
-      background: #222; color: #fff;
+      color: #fff;
       font-weight: bold; font-size: 16px;
-      border: 1px solid #333; border-radius: 10px;
-      padding: 12px; cursor: pointer; transition: 0.2s;
+      padding: 12px; cursor: pointer; transition: 0.3s;
     }
     .top-buttons button:hover {
-      background: #444;
+      background: rgba(255,255,255,0.15);
+      transform: scale(1.05);
     }
-
-    /* --- Form nhập --- */
-    .input-box { 
-      display: none; flex-direction: column; gap: 8px;
-      margin-bottom: 15px; opacity: 0; transition: opacity 0.4s ease;
-    }
-    input, .input-box button {
-      padding: 12px; font-size: 16px;
-      border: 1px solid #333; border-radius: 8px;
-      background: #111; color: #fff;
-    }
-    input:focus {
-      outline: none; border-color: #666; box-shadow: 0 0 6px #555;
-    }
-    .input-box button {
-      background: #222; font-weight: bold; cursor: pointer;
-    }
-    .input-box button:hover { background: #444; }
 
     /* --- Bảng --- */
     table {
       width: 100%; border-collapse: collapse;
-      background: #000; border-radius: 10px; overflow: hidden;
-      border: 1px solid #222;
+      overflow: hidden;
     }
     th, td {
       padding: 12px; font-size: 16px; text-align: left;
-      border-bottom: 1px solid #222;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
     }
-    th { background: #111; color: #ddd; }
-    tr:nth-child(even) { background: #0a0a0a; }
-    tr:hover td { background: #1a1a1a; }
+    th { background: rgba(255,255,255,0.1); color: #fff; }
+    tr:nth-child(even) { background: rgba(255,255,255,0.05); }
+    tr:hover td { background: rgba(255,255,255,0.15); transition:0.3s; }
 
-    .options { cursor: pointer; font-weight: bold; font-size: 20px; text-align: right; color: #777; }
-    .options:hover { color: #fff; }
+    .row-hide { animation: rowFadeOut 0.3s forwards; }
+    @keyframes rowFadeOut {
+      from { opacity: 1; transform: translateX(0); }
+      to { opacity: 0; transform: translateX(40px); }
+    }
 
-    /* --- Tổng --- */
+    .options { cursor: pointer; font-weight: bold; font-size: 20px; text-align: right; color: #aaa; transition:0.3s; }
+    .options:hover { color: #fff; transform: rotate(90deg); }
+
     .total {
       margin-top: 15px; font-size: 18px; font-weight: bold;
       text-align: right; color: #fff;
     }
 
-    /* --- Menu chuột phải --- */
+    /* --- Menu (⋮) --- */
     .context-menu {
-      position: absolute; background: #111; border: 1px solid #333;
-      border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.6);
-      display: none; flex-direction: column; z-index: 1000;
-      overflow: hidden; min-width: 140px;
+      position: absolute; display: none;
+      flex-direction: column; z-index: 1000;
+      min-width: 160px;
+    }
+    .context-menu.show { display: flex; animation: fadeInMenu 0.2s ease; }
+    @keyframes fadeInMenu {
+      from { opacity: 0; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1); }
     }
     .context-menu button {
-      padding: 12px; border: none; border-bottom: 1px solid #222;
-      background: #111; font-size: 15px; text-align: left;
-      cursor: pointer; color: #fff;
+      padding: 12px; border: none;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      font-size: 15px; text-align: left;
+      cursor: pointer; color: #fff; background: transparent;
     }
-    .context-menu button:hover { background: #222; }
-    .context-menu button:last-child { border-bottom: none; }
+    .context-menu button:hover {
+      background: rgba(255,255,255,0.2);
+    }
 
-    /* --- Menu sao lưu --- */
-    .backup-menu {
-      position: absolute; background: #111; border: 1px solid #333;
-      border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.6);
-      display: none; flex-direction: column; z-index: 1000;
-      overflow: hidden; min-width: 160px;
+    /* --- Popup --- */
+    .popup-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.6);
+      display: none; justify-content: center; align-items: flex-start;
+      padding-top: 80px; z-index: 2000;
     }
-    .backup-menu button {
-      padding: 12px; border: none; border-bottom: 1px solid #222;
-      background: #111; font-size: 15px; text-align: left;
-      cursor: pointer; color: #fff;
+    .popup-overlay.show { display: flex; animation: fadeOverlay 0.3s ease; }
+    .popup-overlay.hide { display: flex; animation: fadeOutOverlay 0.3s ease; }
+    @keyframes fadeOverlay { from {opacity:0;} to {opacity:1;} }
+    @keyframes fadeOutOverlay { from {opacity:1;} to {opacity:0;} }
+
+    .popup-box {
+      padding: 30px; width: 95%; max-width: 420px;
+      display: flex; flex-direction: column; gap: 18px;
+      animation: popupZoom 0.35s ease;
     }
-    .backup-menu button:hover { background: #222; }
-    .backup-menu button:last-child { border-bottom: none; }
+    @keyframes popupZoom {
+      from { transform: scale(0.8); opacity: 0; }
+      to   { transform: scale(1); opacity: 1; }
+    }
+    .popup-box h3 {
+      text-align: center; color: #fff; font-size: 20px;
+    }
+    .popup-box input, .popup-box button {
+      padding: 14px; border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.15);
+      font-size: 16px; transition: 0.3s;
+    }
+    .popup-box input {
+      background: rgba(255,255,255,0.1); color: #fff;
+    }
+    .popup-box input:focus {
+      border-color: #fff; box-shadow: 0 0 6px #fff;
+    }
+    .popup-box button {
+      background: rgba(255,255,255,0.1); color: #fff;
+      font-weight: bold; cursor: pointer;
+    }
+    .popup-box button:hover { background: #fff; color:#000; }
   </style>
 </head>
 <body>
   <h1>SỔ GHI NỢ</h1>
 
-  <!-- Hàng nút chính -->
   <div class="top-buttons">
-    <button id="backupBtn">Sao lưu</button>
-    <button id="toggleFormBtn">Thêm</button>
+    <button class="glass" id="backupBtn">Sao lưu</button>
+    <button class="glass" id="toggleFormBtn">Thêm</button>
   </div>
 
-  <!-- Form nhập -->
-  <div class="input-box" id="inputBox">
-    <input type="text" id="name" placeholder="Tên người nợ">
-    <input type="number" id="amount" placeholder="Số tiền">
-    <button onclick="addDebt()">Xác nhận</button>
-  </div>
-
-  <!-- Bảng dữ liệu -->
-  <table id="debtTable">
+  <table class="glass" id="debtTable">
     <tr><th>Tên</th><th>Số tiền</th><th></th></tr>
   </table>
 
   <div class="total" id="totalDebt">Tổng: 0 ₫</div>
 
-  <!-- Context menu -->
-  <div class="context-menu" id="contextMenu">
+  <div class="context-menu glass" id="contextMenu">
     <button id="editBtn">✏️ Chỉnh sửa</button>
     <button id="deleteBtn">❌ Xóa</button>
   </div>
 
-  <!-- Menu sao lưu -->
-  <div class="backup-menu" id="backupMenu">
-    <button onclick="exportData()">📤 Xuất dữ liệu</button>
-    <input type="file" id="importFile" accept="application/json" style="display:none;" onchange="importData(event)">
-    <button onclick="document.getElementById('importFile').click()">📥 Nhập dữ liệu</button>
+  <!-- Popup Thêm -->
+  <div class="popup-overlay" id="popupAdd">
+    <div class="popup-box glass">
+      <h3>Thêm nợ mới</h3>
+      <input type="text" id="name" placeholder="Tên người nợ">
+      <input type="number" id="amount" placeholder="Số tiền">
+      <div style="display:flex; gap:10px; justify-content:flex-end;">
+        <button onclick="closePopup('popupAdd')">Hủy</button>
+        <button onclick="addDebt()">Xác nhận</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Popup Chỉnh sửa -->
+  <div class="popup-overlay" id="popupEdit">
+    <div class="popup-box glass">
+      <h3>Chỉnh sửa nợ</h3>
+      <input type="text" id="editName" placeholder="Tên người nợ">
+      <input type="number" id="editAmount" placeholder="Số tiền">
+      <div style="display:flex; gap:10px; justify-content:flex-end;">
+        <button onclick="closePopup('popupEdit')">Hủy</button>
+        <button onclick="confirmEdit()">Lưu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Popup Sao lưu -->
+  <div class="popup-overlay" id="popupBackup">
+    <div class="popup-box glass">
+      <h3>Sao lưu dữ liệu</h3>
+      <button onclick="exportData()">📤 Xuất dữ liệu</button>
+      <input type="file" id="importFile" accept="application/json" style="display:none;" onchange="importData(event)">
+      <button onclick="document.getElementById('importFile').click()">📥 Nhập dữ liệu</button>
+    </div>
   </div>
 
   <script>
     const table = document.getElementById("debtTable");
     const inputName = document.getElementById("name");
     const inputAmount = document.getElementById("amount");
+    const editName = document.getElementById("editName");
+    const editAmount = document.getElementById("editAmount");
     const totalDebt = document.getElementById("totalDebt");
     const contextMenu = document.getElementById("contextMenu");
-    const backupMenu = document.getElementById("backupMenu");
     let currentRow = null;
 
     window.onload = () => {
@@ -167,7 +215,8 @@
       if (!name || !amount) return;
       addDebtToTable(name, amount);
       saveDebts(); updateTotal();
-      inputName.value = ""; inputAmount.value = ""; hideForm();
+      inputName.value = ""; inputAmount.value = "";
+      closePopup("popupAdd");
     }
 
     function addDebtToTable(name, amount) {
@@ -175,10 +224,9 @@
       row.insertCell(0).textContent = name;
       row.insertCell(1).textContent = formatMoney(amount);
       row.insertCell(2).innerHTML = `<span class="options">⋮</span>`;
-      const optionsBtn = row.querySelector(".options");
-      optionsBtn.addEventListener("click", (e) => {
-        e.stopPropagation(); currentRow = row; showContextMenu(optionsBtn);
-      });
+      row.querySelector(".options").onclick = (e) => {
+        e.stopPropagation(); currentRow = row; showContextMenu(row.querySelector(".options"));
+      };
     }
 
     function saveDebts() {
@@ -203,53 +251,71 @@
     /* Context menu */
     function showContextMenu(target) {
       const rect = target.getBoundingClientRect();
-      contextMenu.style.display = "flex";
+      contextMenu.classList.add("show");
       contextMenu.style.left = rect.right - contextMenu.offsetWidth + "px";
       contextMenu.style.top = rect.bottom + "px";
     }
-    function hideContextMenu() { contextMenu.style.display = "none"; backupMenu.style.display="none"; }
+    function hideContextMenu() {
+      contextMenu.classList.remove("show");
+    }
     document.addEventListener("click", () => hideContextMenu());
 
     document.getElementById("editBtn").onclick = () => {
       if (currentRow) {
-        const name = currentRow.cells[0].textContent;
-        const amountText = currentRow.cells[1].textContent.replace(" ₫","").replace(/\./g,"");
-        const newName = prompt("Tên mới:", name) || name;
-        const newAmount = prompt("Số tiền mới:", amountText) || amountText;
-        currentRow.cells[0].textContent = newName;
-        currentRow.cells[1].textContent = formatMoney(newAmount);
-        saveDebts(); updateTotal();
+        editName.value = currentRow.cells[0].textContent;
+        editAmount.value = currentRow.cells[1].textContent.replace(" ₫","").replace(/\./g,"");
+        openPopup("popupEdit");
       }
       hideContextMenu();
     };
+    function confirmEdit() {
+      if (currentRow) {
+        currentRow.cells[0].textContent = editName.value;
+        currentRow.cells[1].textContent = formatMoney(editAmount.value);
+        saveDebts(); updateTotal();
+      }
+      closePopup("popupEdit");
+    }
+
     document.getElementById("deleteBtn").onclick = () => {
-      if (currentRow) { currentRow.remove(); saveDebts(); updateTotal(); }
+      if (currentRow) {
+        currentRow.classList.add("row-hide");
+        setTimeout(() => {
+          currentRow.remove();
+          saveDebts(); updateTotal();
+        }, 300);
+      }
       hideContextMenu();
     };
 
-    /* Toggle form */
-    const toggleFormBtn = document.getElementById("toggleFormBtn");
-    toggleFormBtn.onclick = () => {
-      const form = document.getElementById("inputBox");
-      if (form.style.display === "none" || form.style.display === "") {
-        form.style.display = "flex"; setTimeout(() => form.style.opacity = "1", 10);
-        inputName.focus();
-      } else { hideForm(); }
-    };
-    function hideForm() {
-      const form = document.getElementById("inputBox");
-      form.style.opacity = "0"; setTimeout(() => form.style.display = "none", 400);
+    /* Popup */
+    function openPopup(id) {
+      const popup = document.getElementById(id);
+      popup.style.display = "flex";
+      popup.classList.remove("hide");
+      popup.classList.add("show");
+    }
+    function closePopup(id) {
+      const popup = document.getElementById(id);
+      popup.classList.remove("show");
+      popup.classList.add("hide");
+      setTimeout(() => { popup.style.display = "none"; popup.classList.remove("hide"); }, 300);
     }
 
-    /* Sao lưu menu */
-    const backupBtn = document.getElementById("backupBtn");
-    backupBtn.onclick = (e) => {
-      e.stopPropagation();
-      const rect = backupBtn.getBoundingClientRect();
-      backupMenu.style.display = "flex";
-      backupMenu.style.left = rect.left + "px";
-      backupMenu.style.top = rect.bottom + "px";
-    };
+    /* Click ngoài để đóng */
+    document.querySelectorAll(".popup-overlay").forEach(overlay => {
+      overlay.addEventListener("click", (e) => {
+        if (e.target === overlay) {
+          overlay.style.display = "none";
+        }
+      });
+    });
+
+    /* Nút Thêm */
+    document.getElementById("toggleFormBtn").onclick = () => openPopup("popupAdd");
+
+    /* Nút Sao lưu */
+    document.getElementById("backupBtn").onclick = () => openPopup("popupBackup");
 
     /* Xuất / Nhập JSON */
     function exportData() {
@@ -259,39 +325,26 @@
       const a = document.createElement("a");
       a.href = url; a.download = "so-ghi-no.json";
       a.click(); URL.revokeObjectURL(url);
-      hideContextMenu();
     }
-
     function importData(event) {
       const file = event.target.files[0];
       if (!file) return;
       const reader = new FileReader();
-      reader.onload = function(e) {
+      reader.onload = e => {
         try {
           const imported = JSON.parse(e.target.result);
           if (Array.isArray(imported)) {
             localStorage.setItem("debts", JSON.stringify(imported));
             reloadTable(imported); updateTotal();
             alert("✅ Nhập dữ liệu thành công!");
-          } else { alert("❌ File không hợp lệ!"); }
+          } else alert("❌ File không hợp lệ!");
         } catch { alert("❌ Lỗi khi đọc file!"); }
       };
       reader.readAsText(file);
-      hideContextMenu();
     }
-
     function reloadTable(data) {
       while (table.rows.length > 1) table.deleteRow(1);
       data.forEach(d => addDebtToTable(d.name, d.amount));
-    }
-
-    /* Service Worker */
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => {
-        navigator.serviceWorker.register("service-worker.js")
-          .then(() => console.log("✅ Service Worker registered"))
-          .catch(err => console.log("❌ SW failed:", err));
-      });
     }
   </script>
 </body>
